@@ -33,7 +33,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.24'
           cache-dependency-path: backend/services/${{ matrix.service }}/go.sum
 
       - name: Install dependencies
@@ -80,7 +80,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.24'
           cache-dependency-path: backend/services/${{ matrix.service }}/go.sum
 
       - name: Build service
@@ -89,8 +89,17 @@ jobs:
           go build -v -o bin/main .
 
   lint:
-    name: Lint Backend Code
+    name: Lint ${{ matrix.service }}
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        service:
+          - cart-service
+          - order-service
+          - point-service
+          - product-service
+          - promotion-service
     
     steps:
       - name: Checkout code
@@ -99,13 +108,14 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.24'
+          cache-dependency-path: backend/services/${{ matrix.service }}/go.sum
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
           version: latest
-          working-directory: backend/services
+          working-directory: backend/services/${{ matrix.service }}
           args: --timeout=5m
 
   validate-openapi:
@@ -128,7 +138,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.24'
 
       - name: Install oapi-codegen
         run: go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.16.2
