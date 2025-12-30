@@ -1,0 +1,108 @@
+name: OpenAPI Schema Validation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'api-schema/openapi/**'
+      - 'backend/services/*/openapi.yaml'
+      - '.github/workflows/openapi-validation.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'api-schema/openapi/**'
+      - 'backend/services/*/openapi.yaml'
+      - '.github/workflows/openapi-validation.yml'
+
+jobs:
+  validate-schemas:
+    name: Validate OpenAPI Schemas
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        schema:
+          - cart-service
+          - order-service
+          - point-service
+          - product-service
+          - promotion-service
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Swagger CLI
+        run: npm install -g @apidevtools/swagger-cli
+
+      - name: Validate schema in api-schema
+        run: |
+          if [ -f "api-schema/openapi/${{ matrix.schema }}.yaml" ]; then
+            swagger-cli validate api-schema/openapi/${{ matrix.schema }}.yaml
+          fi
+
+      - name: Validate schema in service
+        run: |
+          if [ -f "backend/services/${{ matrix.schema }}/openapi.yaml" ]; then
+            swagger-cli validate backend/services/${{ matrix.schema }}/openapi.yaml
+          fi
+
+  check-schema-sync:
+    name: Check Schema Synchronization
+    runs-on: ubuntu-latest
+    needs: validate-schemas
+    
+    strategy:
+      matrix:
+        service:
+          - cart-service
+          - order-service
+          - point-service
+          - product-service
+          - promotion-service
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if schemas are in sync
+        run: |
+          API_SCHEMA="api-schema/openapi/${{ matrix.service }}.yaml"
+          SERVICE_SCHEMA="backend/services/${{ matrix.service }}/openapi.yaml"
+          
+          if [ -f "$API_SCHEMA" ] && [ -f "$SERVICE_SCHEMA" ]; then
+            if ! diff -q "$API_SCHEMA" "$SERVICE_SCHEMA"; then
+              echo "OpenAPI schemas are out of sync between api-schema and service directory"
+              echo "Please ensure both files are identical"
+              diff "$API_SCHEMA" "$SERVICE_SCHEMA" || true
+              exit 1
+            fi
+          fi
+
+  lint-schemas:
+    name: Lint OpenAPI Schemas
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Spectral
+        run: npm install -g @stoplight/spectral-cli
+
+      - name: Lint all OpenAPI schemas
+        run: |
+          for schema in api-schema/openapi/*.yaml; do
+            echo "Linting $schema"
+            spectral lint "$schema" --ruleset spectral:oas || echo "Warning: Linting issues found in $schema"
+          done

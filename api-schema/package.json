@@ -1,0 +1,30 @@
+{
+  "name": "@ec-sample/api-schema",
+  "version": "1.0.0",
+  "description": "OpenAPI specifications and TypeScript types for EC-Sample services",
+  "scripts": {
+    "generate": "npm run generate:types && make generate-go",
+    "generate:types": "npm run generate:product && npm run generate:cart && npm run generate:order && npm run generate:point && npm run generate:promotion",
+    "generate:go": "make generate-go",
+    "generate:product": "openapi-typescript openapi/product-service.yaml -o types/product-service.ts",
+    "generate:cart": "openapi-typescript openapi/cart-service.yaml -o types/cart-service.ts",
+    "generate:order": "openapi-typescript openapi/order-service.yaml -o types/order-service.ts",
+    "generate:point": "openapi-typescript openapi/point-service.yaml -o types/point-service.ts",
+    "generate:promotion": "openapi-typescript openapi/promotion-service.yaml -o types/promotion-service.ts",
+    "validate": "npm run validate:product && npm run validate:cart && npm run validate:order && npm run validate:point && npm run validate:promotion",
+    "validate:product": "openapi-lint openapi/product-service.yaml",
+    "validate:cart": "openapi-lint openapi/cart-service.yaml",
+    "validate:order": "openapi-lint openapi/order-service.yaml",
+    "validate:point": "openapi-lint openapi/point-service.yaml",
+    "validate:promotion": "openapi-lint openapi/promotion-service.yaml"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^6.7.3"
+  },
+  "keywords": [
+    "openapi",
+    "api-schema",
+    "typescript",
+    "ec-sample"
+  ]
+}

@@ -1,0 +1,233 @@
+openapi: 3.0.0
+info:
+  title: Promotion Service API
+  description: プロモーション・クーポン・セール管理API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8005/api/v1
+    description: Development server
+
+paths:
+  /promotions/validate-coupon:
+    post:
+      summary: クーポン検証
+      description: クーポンコードを検証して割引額を計算
+      operationId: validateCoupon
+      tags:
+        - Promotions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateCouponRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CouponValidationResult'
+        '400':
+          description: リクエスト不正
+
+  /promotions/coupons:
+    get:
+      summary: アクティブなクーポン取得
+      description: 現在有効なクーポン一覧を取得
+      operationId: getActiveCoupons
+      tags:
+        - Promotions
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Coupon'
+
+  /promotions/sales:
+    get:
+      summary: アクティブなセール取得
+      description: 現在実施中のセール一覧を取得
+      operationId: getActiveSales
+      tags:
+        - Promotions
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sale'
+
+  /promotions/sales/category/{category}:
+    get:
+      summary: カテゴリ別セール取得
+      description: 指定カテゴリの適用セールを取得
+      operationId: getSalesByCategory
+      tags:
+        - Promotions
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sale'
+
+  /promotions/sales/product/{product_id}:
+    get:
+      summary: 商品別セール取得
+      description: 指定商品の適用セールを取得
+      operationId: getSalesByProduct
+      tags:
+        - Promotions
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sale'
+
+components:
+  schemas:
+    Coupon:
+      type: object
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        status:
+          type: string
+          enum: [active, expired, used, suspended]
+        discount_type:
+          type: string
+          enum: [percentage, fixed_amount]
+        discount_value:
+          type: number
+          format: double
+        max_discount:
+          type: number
+          format: double
+        min_order_amount:
+          type: number
+          format: double
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        max_usage_count:
+          type: integer
+        current_usage_count:
+          type: integer
+        max_per_user:
+          type: integer
+        applicable_categories:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Sale:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date-time
+        end_date:
+          type: string
+          format: date-time
+        discount_type:
+          type: string
+          enum: [percentage, fixed_amount]
+        discount_value:
+          type: number
+          format: double
+        max_discount:
+          type: number
+          format: double
+        applicable_categories:
+          type: array
+          items:
+            type: string
+        applicable_products:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+
+    ValidateCouponRequest:
+      type: object
+      required:
+        - code
+        - order_total
+        - user_id
+      properties:
+        code:
+          type: string
+        order_total:
+          type: number
+          format: double
+        user_id:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              product_id:
+                type: string
+              category:
+                type: string
+
+    CouponValidationResult:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        discount_amount:
+          type: number
+          format: double
+        message:
+          type: string
+        coupon:
+          $ref: '#/components/schemas/Coupon'
+          nullable: true

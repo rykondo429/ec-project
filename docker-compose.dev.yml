@@ -1,0 +1,127 @@
+services:
+  # MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: ec-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-ecsite}
+      MYSQL_USER: ${DB_USER:-ecuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-ecpassword}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - ec-network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: ec-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+    networks:
+      - ec-network
+
+  # Elasticsearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: ec-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"'"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - ec-network
+
+  # Kibana
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.10.2
+    container_name: ec-kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      xpack.security.enabled: "false"
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q '\"level\":\"available\"'"]
+      timeout: 30s
+      retries: 10
+      interval: 10s
+    networks:
+      - ec-network
+
+  # LocalStack
+  localstack:
+    image: localstack/localstack:latest
+    container_name: ec-localstack
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    environment:
+      SERVICES: dynamodb,sqs,sns,cognito-idp,s3,kms
+      DEBUG: 1
+      DATA_DIR: /tmp/localstack/data
+      DOCKER_HOST: unix:///var/run/docker.sock
+      LAMBDA_EXECUTOR: docker
+    volumes:
+      - "${TMPDIR}/localstack:/tmp/localstack"
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./init-aws.sh:/docker-entrypoint-initaws.d/init-aws.sh
+    networks:
+      - ec-network
+
+  # Web Frontend (開発モード - ホットリロード有効)
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: ec-web-dev
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8001
+      NEXT_PUBLIC_CART_API_URL: http://localhost:8002
+      NEXT_PUBLIC_ORDER_API_URL: http://localhost:8003
+      NEXT_PUBLIC_POINT_API_URL: http://localhost:8004
+      NEXT_PUBLIC_PROMOTION_API_URL: http://localhost:8005
+      NODE_ENV: development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - ec-network
+
+volumes:
+  mysql_data:
+  redis_data:
+  elasticsearch_data:
+
+networks:
+  ec-network:
+    driver: bridge

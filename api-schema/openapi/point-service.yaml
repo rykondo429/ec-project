@@ -1,0 +1,187 @@
+openapi: 3.0.0
+info:
+  title: Point Service API
+  description: ポイント管理API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8004/api/v1
+    description: Development server
+
+paths:
+  /points/balance:
+    get:
+      summary: ポイント残高取得
+      description: ユーザーのポイント残高を取得
+      operationId: getBalance
+      tags:
+        - Points
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PointBalance'
+        '500':
+          description: サーバーエラー
+
+  /points/earn:
+    post:
+      summary: ポイント付与
+      description: ユーザーにポイントを付与
+      operationId: earnPoints
+      tags:
+        - Points
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EarnPointsRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PointBalance'
+        '400':
+          description: リクエスト不正
+
+  /points/use:
+    post:
+      summary: ポイント使用
+      description: ユーザーのポイントを使用
+      operationId: usePoints
+      tags:
+        - Points
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsePointsRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PointBalance'
+        '400':
+          description: リクエスト不正
+
+  /points/transactions:
+    get:
+      summary: トランザクション履歴取得
+      description: ポイントトランザクション履歴を取得
+      operationId: getTransactions
+      tags:
+        - Points
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PointTransaction'
+                  total:
+                    type: integer
+                  current_page:
+                    type: integer
+                  page_size:
+                    type: integer
+
+components:
+  schemas:
+    PointBalance:
+      type: object
+      properties:
+        user_id:
+          type: string
+        total_points:
+          type: integer
+        available_points:
+          type: integer
+        reserved_points:
+          type: integer
+        expired_points:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+
+    PointTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        type:
+          type: string
+          enum: [earn, use, expire, refund]
+        points:
+          type: integer
+        balance:
+          type: integer
+        reason:
+          type: string
+        related_order_id:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    EarnPointsRequest:
+      type: object
+      required:
+        - points
+        - reason
+      properties:
+        points:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+        related_order_id:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UsePointsRequest:
+      type: object
+      required:
+        - points
+        - reason
+      properties:
+        points:
+          type: integer
+          minimum: 1
+        reason:
+          type: string
+        related_order_id:
+          type: string

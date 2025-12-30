@@ -1,0 +1,286 @@
+version: '3.8'
+
+services:
+  # MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: ec-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-ecsite}
+      MYSQL_USER: ${DB_USER:-ecuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-ecpassword}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - ec-network
+
+  # Redis (ElastiCache 代替)
+  redis:
+    image: redis:7-alpine
+    container_name: ec-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 3s
+      retries: 5
+    networks:
+      - ec-network
+
+  # Elasticsearch (OpenSearch)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: ec-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -q '\"status\":\"green\"'"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - ec-network
+
+  # Kibana
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.10.2
+    container_name: ec-kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      xpack.security.enabled: "false"
+      I18N_LOCALE: "ja-JP"
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:5601/api/status | grep -q '\"level\":\"available\"'"]
+      timeout: 30s
+      retries: 10
+      interval: 10s
+    networks:
+      - ec-network
+
+  # LocalStack (AWS サービスローカルエミュレーション)
+  localstack:
+    image: localstack/localstack:latest
+    container_name: ec-localstack
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    environment:
+      SERVICES: dynamodb,sqs,sns,cognito-idp,s3,kms
+      DEBUG: 1
+      DATA_DIR: /tmp/localstack/data
+      DOCKER_HOST: unix:///var/run/docker.sock
+      LAMBDA_EXECUTOR: docker
+      CLEAR_TMP_FOLDER: "0"
+    volumes:
+      - localstack_data:/tmp/localstack
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .scripts/init-aws.sh:/docker-entrypoint-initaws.d/init-aws.sh
+    networks:
+      - ec-network
+
+  # Product Service
+  product-service:
+    build:
+      context: ./backend
+      dockerfile: services/product-service/Dockerfile
+    container_name: ec-product-service
+    ports:
+      - "8001:8001"
+    environment:
+      PORT: 8001
+      MYSQL_DSN: ${DB_USER:-ecuser}:${DB_PASSWORD:-ecpassword}@tcp(mysql:3306)/${DB_NAME:-ecsite}?parseTime=true
+      REDIS_ADDR: redis:6379
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
+      COGNITO_JWKS_URL: ${COGNITO_JWKS_URL}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - ec-network
+
+  # Cart Service
+  cart-service:
+    build:
+      context: ./backend
+      dockerfile: services/cart-service/Dockerfile
+    container_name: ec-cart-service
+    ports:
+      - "8002:8002"
+    environment:
+      PORT: 8002
+      MYSQL_DSN: ${DB_USER:-ecuser}:${DB_PASSWORD:-ecpassword}@tcp(mysql:3306)/${DB_NAME:-ecsite}?parseTime=true
+      REDIS_ADDR: redis:6379
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
+      COGNITO_JWKS_URL: ${COGNITO_JWKS_URL}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - ec-network
+
+  # Order Service
+  order-service:
+    build:
+      context: ./backend
+      dockerfile: services/order-service/Dockerfile
+    container_name: ec-order-service
+    ports:
+      - "8003:8003"
+    environment:
+      PORT: 8003
+      MYSQL_DSN: ${DB_USER:-ecuser}:${DB_PASSWORD:-ecpassword}@tcp(mysql:3306)/${DB_NAME:-ecsite}?parseTime=true
+      REDIS_ADDR: redis:6379
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
+      COGNITO_JWKS_URL: ${COGNITO_JWKS_URL}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - ec-network
+
+  # Point Service
+  point-service:
+    build:
+      context: ./backend
+      dockerfile: services/point-service/Dockerfile
+    container_name: ec-point-service
+    ports:
+      - "8004:8004"
+    environment:
+      PORT: 8004
+      MYSQL_DSN: ${DB_USER:-ecuser}:${DB_PASSWORD:-ecpassword}@tcp(mysql:3306)/${DB_NAME:-ecsite}?parseTime=true
+      REDIS_ADDR: redis:6379
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
+      COGNITO_JWKS_URL: ${COGNITO_JWKS_URL}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - ec-network
+
+  # Promotion Service
+  promotion-service:
+    build:
+      context: ./backend
+      dockerfile: services/promotion-service/Dockerfile
+    container_name: ec-promotion-service
+    ports:
+      - "8005:8005"
+    environment:
+      PORT: 8005
+      MYSQL_DSN: ${DB_USER:-ecuser}:${DB_PASSWORD:-ecpassword}@tcp(mysql:3306)/${DB_NAME:-ecsite}?parseTime=true
+      REDIS_ADDR: redis:6379
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
+      COGNITO_JWKS_URL: ${COGNITO_JWKS_URL}
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - ec-network
+
+  # Web Frontend
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: ec-web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8001
+      NEXT_PUBLIC_CART_API_URL: http://localhost:8002
+      NEXT_PUBLIC_ORDER_API_URL: http://localhost:8003
+      NEXT_PUBLIC_POINT_API_URL: http://localhost:8004
+      NEXT_PUBLIC_PROMOTION_API_URL: http://localhost:8005
+    depends_on:
+      - product-service
+      - cart-service
+      - order-service
+      - point-service
+      - promotion-service
+    networks:
+      - ec-network
+
+volumes:
+  mysql_data:
+  redis_data:
+  elasticsearch_data:
+  localstack_data:
+
+networks:
+  ec-network:
+    driver: bridge

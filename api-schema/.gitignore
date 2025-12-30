@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Generated code (auto-generated from openapi specs)
+generated/
+
+# OS
+.DS_Store
+Thumbs.db

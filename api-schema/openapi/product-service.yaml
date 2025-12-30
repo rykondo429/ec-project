@@ -1,0 +1,506 @@
+openapi: 3.0.0
+info:
+  title: Product Service API
+  description: 商品検索・管理API
+  version: 1.0.0
+  contact:
+    name: EC Sample Team
+
+servers:
+  - url: http://localhost:8001/api/v1
+    description: Development server
+  - url: https://api.example.com/api/v1
+    description: Production server
+
+paths:
+  /products/{id}:
+    get:
+      summary: 商品詳細取得
+      description: 商品IDから商品情報を取得
+      operationId: getProduct
+      tags:
+        - Products
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Product ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: 商品が見つかりません
+        '500':
+          description: サーバーエラー
+
+  /products/search:
+    get:
+      summary: 商品検索
+      description: キーワード・カテゴリ・価格範囲で商品検索
+      operationId: searchProducts
+      tags:
+        - Products
+      parameters:
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: 検索キーワード
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: カテゴリ
+        - name: price_min
+          in: query
+          schema:
+            type: number
+          description: 最低価格
+        - name: price_max
+          in: query
+          schema:
+            type: number
+          description: 最高価格
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [price, rating, created_at]
+          description: ソート対象
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+          description: ソート順序
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: ページサイズ
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResult'
+        '400':
+          description: リクエスト不正
+        '500':
+          description: サーバーエラー
+
+  /products/featured:
+    get:
+      summary: おすすめ商品取得
+      description: ピックアップ商品一覧を取得
+      operationId: getFeaturedProducts
+      tags:
+        - Products
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '500':
+          description: サーバーエラー
+
+  /products/categories:
+    get:
+      summary: カテゴリー一覧取得
+      description: 利用可能なカテゴリー一覧を取得
+      operationId: getCategories
+      tags:
+        - Products
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      type: string
+                    description: カテゴリー名のリスト
+        '500':
+          description: サーバーエラー
+
+  /products/category/{category}:
+    get:
+      summary: カテゴリ別商品取得
+      description: カテゴリから商品一覧を取得
+      operationId: getProductsByCategory
+      tags:
+        - Products
+      parameters:
+        - name: category
+          in: path
+          required: true
+          schema:
+            type: string
+          description: カテゴリ名
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: ページ番号
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: ページサイズ
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResult'
+        '400':
+          description: リクエスト不正
+        '500':
+          description: サーバーエラー
+
+  /products/{product_id}/skus:
+    get:
+      summary: 商品のSKU一覧取得
+      description: 商品IDから有効なSKU一覧を取得
+      operationId: getSKUsByProduct
+      tags:
+        - SKUs
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 商品ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SKU'
+        '404':
+          description: 商品が見つかりません
+        '500':
+          description: サーバーエラー
+
+  /products/{product_id}/with-skus:
+    get:
+      summary: 商品とSKUをまとめて取得
+      description: 商品情報とSKU一覧を一括取得
+      operationId: getProductWithSKUs
+      tags:
+        - SKUs
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 商品ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductWithSKUs'
+        '404':
+          description: 商品が見つかりません
+        '500':
+          description: サーバーエラー
+
+  /skus/{id}:
+    get:
+      summary: SKU詳細取得
+      description: SKU IDからSKU情報を取得
+      operationId: getSKU
+      tags:
+        - SKUs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SKU ID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SKU'
+        '404':
+          description: SKUが見つかりません
+        '500':
+          description: サーバーエラー
+
+  /skus/code/{code}:
+    get:
+      summary: SKUコード検索
+      description: SKUコードからSKU情報を取得
+      operationId: getSKUByCode
+      tags:
+        - SKUs
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SKUコード
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SKU'
+        '404':
+          description: SKUが見つかりません
+        '500':
+          description: サーバーエラー
+
+  /skus/low-stock:
+    get:
+      summary: 低在庫SKU一覧
+      description: 在庫が閾値以下のSKU一覧を取得
+      operationId: getLowStockSKUs
+      tags:
+        - SKUs
+      parameters:
+        - name: threshold
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: 在庫閾値
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SKU'
+        '500':
+          description: サーバーエラー
+
+components:
+  schemas:
+    Product:
+      type: object
+      required:
+        - id
+        - name
+        - price
+      properties:
+        id:
+          type: string
+          description: 商品ID
+        name:
+          type: string
+          description: 商品名
+        description:
+          type: string
+          description: 説明
+        price:
+          type: number
+          format: double
+          description: 価格
+        stock:
+          type: integer
+          description: 在庫数
+        category:
+          type: string
+          description: カテゴリ
+        images:
+          type: array
+          items:
+            type: string
+          description: 画像URL
+        rating:
+          type: number
+          format: double
+          description: 評価
+        review_count:
+          type: integer
+          description: レビュー数
+        is_sale:
+          type: boolean
+          description: セール中か
+        sale_price:
+          type: number
+          format: double
+          nullable: true
+          description: セール価格
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+        is_active:
+          type: boolean
+          description: アクティブ状態
+
+    SearchResult:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        total:
+          type: integer
+          description: 総件数
+        current_page:
+          type: integer
+          description: 現在ページ
+        total_pages:
+          type: integer
+          description: 総ページ数
+        page_size:
+          type: integer
+          description: ページサイズ
+
+    SKU:
+      type: object
+      required:
+        - id
+        - product_id
+        - sku_code
+        - name
+        - price
+        - stock
+      properties:
+        id:
+          type: string
+          description: SKU ID
+        product_id:
+          type: string
+          description: 商品ID
+        sku_code:
+          type: string
+          description: SKUコード
+        name:
+          type: string
+          description: SKU名
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+          description: バリエーション属性（色、サイズなど）
+          example:
+            color: "Red"
+            size: "M"
+        price:
+          type: number
+          format: double
+          description: SKU価格
+        stock:
+          type: integer
+          description: 在庫数
+        is_active:
+          type: boolean
+          description: アクティブ状態
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    ProductWithSKUs:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - skus
+      properties:
+        id:
+          type: string
+          description: 商品ID
+        name:
+          type: string
+          description: 商品名
+        description:
+          type: string
+          description: 説明
+        price:
+          type: number
+          format: double
+          description: 基本価格
+        category:
+          type: string
+          description: カテゴリ
+        images:
+          type: array
+          items:
+            type: string
+          description: 画像URL
+        rating:
+          type: number
+          format: double
+          description: 評価
+        review_count:
+          type: integer
+          description: レビュー数
+        is_sale:
+          type: boolean
+          description: セール中か
+        sale_price:
+          type: number
+          format: double
+          nullable: true
+          description: セール価格
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+        is_active:
+          type: boolean
+          description: アクティブ状態
+        skus:
+          type: array
+          items:
+            $ref: '#/components/schemas/SKU'
+          description: SKU一覧

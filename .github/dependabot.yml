@@ -1,0 +1,92 @@
+version: 2
+updates:
+  # Go dependencies for each service
+  - package-ecosystem: "gomod"
+    directory: "/backend/services/cart-service"
+    schedule:
+      interval: "weekly"
+    groups:
+      aws-sdk:
+        patterns:
+          - "github.com/aws/aws-sdk-go-v2*"
+      echo:
+        patterns:
+          - "github.com/labstack/echo*"
+
+  - package-ecosystem: "gomod"
+    directory: "/backend/services/order-service"
+    schedule:
+      interval: "weekly"
+    groups:
+      aws-sdk:
+        patterns:
+          - "github.com/aws/aws-sdk-go-v2*"
+      gorm:
+        patterns:
+          - "gorm.io/gorm*"
+          - "gorm.io/driver/*"
+
+  - package-ecosystem: "gomod"
+    directory: "/backend/services/point-service"
+    schedule:
+      interval: "weekly"
+    groups:
+      gorm:
+        patterns:
+          - "gorm.io/gorm*"
+          - "gorm.io/driver/*"
+
+  - package-ecosystem: "gomod"
+    directory: "/backend/services/product-service"
+    schedule:
+      interval: "weekly"
+    groups:
+      opensearch:
+        patterns:
+          - "github.com/opensearch-project/*"
+
+  - package-ecosystem: "gomod"
+    directory: "/backend/services/promotion-service"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "gomod"
+    directory: "/backend/shared"
+    schedule:
+      interval: "weekly"
+
+  # Frontend dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+      next:
+        patterns:
+          - "next"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+
+  # API schema dependencies
+  - package-ecosystem: "npm"
+    directory: "/api-schema"
+    schedule:
+      interval: "weekly"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
