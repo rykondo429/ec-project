@@ -1,0 +1,206 @@
+openapi: 3.0.0
+info:
+  title: Order Service API
+  description: 注文管理API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8003/api/v1
+    description: Development server
+
+paths:
+  /orders:
+    get:
+      summary: 注文履歴取得
+      description: ユーザーの注文履歴を取得
+      operationId: getUserOrders
+      tags:
+        - Orders
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Order'
+                  total:
+                    type: integer
+                  current_page:
+                    type: integer
+                  page_size:
+                    type: integer
+
+    post:
+      summary: 注文作成
+      description: 新しい注文を作成
+      operationId: createOrder
+      tags:
+        - Orders
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: リクエスト不正
+
+  /orders/{id}:
+    get:
+      summary: 注文取得
+      description: 注文IDから注文情報を取得
+      operationId: getOrder
+      tags:
+        - Orders
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          description: 注文が見つかりません
+
+  /orders/{id}/status:
+    put:
+      summary: 注文ステータス更新
+      description: 注文ステータスを更新
+      operationId: updateOrderStatus
+      tags:
+        - Orders
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [pending, processing, completed, cancelled]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: リクエスト不正
+
+components:
+  schemas:
+    OrderItem:
+      type: object
+      properties:
+        product_id:
+          type: string
+        product_name:
+          type: string
+        price:
+          type: number
+          format: double
+        quantity:
+          type: integer
+        subtotal:
+          type: number
+          format: double
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        subtotal:
+          type: number
+          format: double
+        shipping_cost:
+          type: number
+          format: double
+        tax:
+          type: number
+          format: double
+        discount_amount:
+          type: number
+          format: double
+        total:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [pending, processing, completed, cancelled]
+        payment_method:
+          type: string
+        shipping_address:
+          type: string
+        points_used:
+          type: integer
+        points_earned:
+          type: integer
+        coupon_code:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - items
+        - payment_method
+        - shipping_address
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        payment_method:
+          type: string
+        shipping_address:
+          type: string
+        points_to_use:
+          type: integer
+          default: 0
+        coupon_code:
+          type: string

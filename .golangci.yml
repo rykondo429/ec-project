@@ -1,0 +1,84 @@
+# golangci-lint configuration
+# https://golangci-lint.run/usage/configuration/
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Vet examines Go source code
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Static analysis checks
+    - unused        # Check for unused code
+    - gofmt         # Check formatting
+    - goimports     # Check imports
+    - misspell      # Check for misspelled words
+    - revive        # Fast, configurable, extensible, flexible linter
+    - typecheck     # Type checking
+    - gosec         # Security checker
+    - bodyclose     # Check HTTP response body is closed
+    - errname       # Check error naming conventions
+    - errorlint     # Error wrapping checks
+    - goconst       # Repeated strings that could be constants
+    - gocritic      # Opinionated linter
+    - nolintlint    # Reports ill-formed or insufficient nolint directives
+    - predeclared   # Find code that shadows predeclared identifiers
+    - unconvert     # Unnecessary type conversions
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  
+  govet:
+    check-shadowing: true
+    enable-all: true
+  
+  gofmt:
+    simplify: true
+  
+  revive:
+    rules:
+      - name: var-naming
+        severity: warning
+      - name: indent-error-flow
+        severity: warning
+      - name: unexported-return
+        severity: warning
+      - name: early-return
+        severity: warning
+  
+  gosec:
+    severity: medium
+    confidence: medium
+    excludes:
+      - G104  # Unhandled errors (covered by errcheck)
+  
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+    
+    # Exclude generated files
+    - path: generated/
+      linters:
+        - all
+  
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true

@@ -1,0 +1,205 @@
+openapi: 3.0.0
+info:
+  title: Cart Service API
+  description: ショッピングカート管理API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8002/api/v1
+    description: Development server
+
+paths:
+  /carts:
+    get:
+      summary: カート取得
+      description: ユーザーのカート情報を取得
+      operationId: getCart
+      tags:
+        - Carts
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '500':
+          description: サーバーエラー
+
+    delete:
+      summary: カートをクリア
+      description: カート内のすべてのアイテムを削除
+      operationId: clearCart
+      tags:
+        - Carts
+      responses:
+        '204':
+          description: 成功
+        '400':
+          description: リクエスト不正
+
+  /carts/items:
+    post:
+      summary: アイテム追加
+      description: カートにアイテムを追加
+      operationId: addItem
+      tags:
+        - Carts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddItemRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: リクエスト不正
+
+  /carts/items/{product_id}:
+    put:
+      summary: アイテム更新
+      description: カート内のアイテム数量を更新
+      operationId: updateItem
+      tags:
+        - Carts
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateItemRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: リクエスト不正
+
+    delete:
+      summary: アイテム削除
+      description: カートからアイテムを削除
+      operationId: removeItem
+      tags:
+        - Carts
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          description: リクエスト不正
+
+components:
+  schemas:
+    CartItem:
+      type: object
+      properties:
+        product_id:
+          type: string
+        product_name:
+          type: string
+        sku_id:
+          type: string
+          description: SKU ID (optional)
+        sku_code:
+          type: string
+          description: SKU code (optional)
+        sku_attributes:
+          type: object
+          additionalProperties:
+            type: string
+          description: SKU attributes like color, size (optional)
+        price:
+          type: number
+          format: double
+        quantity:
+          type: integer
+        subtotal:
+          type: number
+          format: double
+        added_at:
+          type: string
+          format: date-time
+
+    Cart:
+      type: object
+      properties:
+        user_id:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        total:
+          type: number
+          format: double
+        item_count:
+          type: integer
+        last_modified:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    AddItemRequest:
+      type: object
+      required:
+        - product_id
+        - product_name
+        - price
+        - quantity
+      properties:
+        product_id:
+          type: string
+        product_name:
+          type: string
+        sku_id:
+          type: string
+          description: SKU ID (optional)
+        sku_code:
+          type: string
+          description: SKU code (optional)
+        sku_attributes:
+          type: object
+          additionalProperties:
+            type: string
+          description: SKU attributes like color, size (optional)
+        price:
+          type: number
+          format: double
+        quantity:
+          type: integer
+          minimum: 1
+
+    UpdateItemRequest:
+      type: object
+      required:
+        - quantity
+      properties:
+        quantity:
+          type: integer
+          minimum: 0

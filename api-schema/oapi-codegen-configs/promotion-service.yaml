@@ -1,0 +1,5 @@
+package: generated
+generate:
+  echo-server: true
+  models: true
+output: generated/promotion-service/openapi.go

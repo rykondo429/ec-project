@@ -1,0 +1,212 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { signUp, confirmSignUp } from '@/lib/cognito';
+import { Button } from '@/components/Button';
+
+// 動的レンダリングを強制
+export const dynamic = 'force-dynamic';
+
+export default function SignUpPage() {
+  const router = useRouter();
+  const [step, setStep] = useState<'signup' | 'confirm'>('signup');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [confirmationCode, setConfirmationCode] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      await signUp({ email, password, name });
+      setStep('confirm');
+    } catch (err: any) {
+      console.error('Signup error:', err);
+      setError(err.message || '会員登録に失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      await confirmSignUp(email, confirmationCode);
+      router.push('/login?message=confirmed');
+    } catch (err: any) {
+      console.error('Confirmation error:', err);
+      setError(err.message || '確認コードが正しくありません');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (step === 'confirm') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              メールアドレスの確認
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              {email} に送信された確認コードを入力してください
+            </p>
+          </div>
+
+          <form className="mt-8 space-y-6" onSubmit={handleConfirm}>
+            {error && (
+              <div className="rounded-md bg-red-50 p-4">
+                <div className="flex">
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="code" className="block text-sm font-medium text-gray-700">
+                確認コード
+              </label>
+              <input
+                id="code"
+                name="code"
+                type="text"
+                required
+                value={confirmationCode}
+                onChange={(e) => setConfirmationCode(e.target.value)}
+                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="123456"
+              />
+            </div>
+
+            <div>
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? '確認中...' : '確認する'}
+              </Button>
+            </div>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setStep('signup')}
+                className="text-sm text-primary hover:text-primary-dark"
+              >
+                ← 戻る
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            新規会員登録
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            すでにアカウントをお持ちの方は{' '}
+            <Link href="/login" className="font-medium text-primary hover:text-primary-dark">
+              ログイン
+            </Link>
+          </p>
+        </div>
+
+        <form className="mt-8 space-y-6" onSubmit={handleSignUp}>
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                お名前
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="山田 太郎"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                メールアドレス
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="you@example.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                パスワード
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="new-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                placeholder="8文字以上（英数字・記号含む）"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                ※ 大文字・小文字・数字・記号を含む8文字以上のパスワードを設定してください
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <Button type="submit" disabled={loading} className="w-full">
+              {loading ? '登録中...' : '会員登録'}
+            </Button>
+          </div>
+
+          <div className="text-xs text-gray-500 text-center">
+            登録することで、
+            <Link href="/terms" className="text-primary hover:underline">利用規約</Link>
+            および
+            <Link href="/privacy" className="text-primary hover:underline">プライバシーポリシー</Link>
+            に同意したものとみなされます。
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

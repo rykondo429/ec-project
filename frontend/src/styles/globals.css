@@ -1,0 +1,24 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gray-50;
+}
+
+a {
+  @apply text-primary hover:text-blue-600;
+}
+
+/* Placeholder styles for custom components */
+.product-image {
+  @apply aspect-video bg-gradient-to-br from-gray-300 to-gray-400;
+}
+
+.loading-spinner {
+  @apply inline-block animate-spin rounded-full border-4 border-solid border-current border-r-transparent;
+}

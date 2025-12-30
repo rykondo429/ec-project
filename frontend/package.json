@@ -1,0 +1,36 @@
+{
+  "name": "@ec-sample/web",
+  "version": "1.0.0",
+  "description": "EC Sample - Next.js Frontend",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "api:generate": "openapi-generator-cli generate -i ../openapi.yaml -g typescript-fetch -o ./src/lib/generated"
+  },
+  "dependencies": {
+    "amazon-cognito-identity-js": "^6.3.7",
+    "axios": "^1.7.9",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.562.0",
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.27",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.18.0",
+    "eslint-config-next": "^15.1.6",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.7.3"
+  }
+}
