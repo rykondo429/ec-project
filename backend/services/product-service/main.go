@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"ec-sample/services/product-service/generated"
 	"ec-sample/services/product-service/infrastructure/elasticsearch"
 	mysqlrepo "ec-sample/services/product-service/infrastructure/mysql"
+	redisrepo "ec-sample/services/product-service/infrastructure/redis"
 	"ec-sample/services/product-service/interface/handler"
 	"ec-sample/services/product-service/usecase"
 	"ec-sample/shared/auth"
@@ -17,6 +19,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	opensearchgo "github.com/opensearch-project/opensearch-go/v2"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -41,6 +44,22 @@ func main() {
 
 	logger.Info("MySQL接続成功")
 
+	// Redisクライアント初期化
+	redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     redisAddr,
+		Password: getEnv("REDIS_PASSWORD", ""),
+		DB:       0,
+	})
+
+	// Redis接続確認
+	ctx := context.Background()
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		logger.Warn("Redis接続失敗 - キャッシュなしで続行", zap.Error(err))
+	} else {
+		logger.Info("Redis接続成功")
+	}
+
 	// Elasticsearchクライアント初期化
 	esConfig := opensearchgo.Config{
 		Addresses: []string{
@@ -64,8 +83,11 @@ func main() {
 	// Elasticsearch用のリポジトリ（同期用に保持）
 	esRepo := elasticsearch.NewElasticsearchRepository(esClient)
 
+	// Redisキャッシュリポジトリ初期化
+	cacheRepo := redisrepo.NewCacheRepository(redisClient)
+
 	// ユースケース初期化（MySQLとES両方を渡す）
-	productUC := usecase.NewProductUseCase(productRepo, esRepo, logger)
+	productUC := usecase.NewProductUseCase(productRepo, esRepo, cacheRepo, logger)
 	skuUC := usecase.NewSKUUseCase(skuRepo, productRepo, logger)
 
 	// ハンドラー初期化
@@ -99,8 +121,15 @@ func main() {
 			})
 		}
 
-		return c.JSON(http.StatusOK, map[string]string{
+		// Redis ヘルスチェック（オプショナル）
+		redisStatus := "connected"
+		if err := redisClient.Ping(c.Request().Context()).Err(); err != nil {
+			redisStatus = "disconnected"
+		}
+
+		return c.JSON(http.StatusOK, map[string]interface{}{
 			"status": "healthy",
+			"redis":  redisStatus,
 		})
 	})
 

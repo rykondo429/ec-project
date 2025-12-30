@@ -26,6 +26,13 @@ export interface paths {
      */
     get: operations["getFeaturedProducts"];
   };
+  "/products/categories": {
+    /**
+     * カテゴリー一覧取得
+     * @description 利用可能なカテゴリー一覧を取得
+     */
+    get: operations["getCategories"];
+  };
   "/products/category/{category}": {
     /**
      * カテゴリ別商品取得
@@ -308,6 +315,27 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["Product"][];
+        };
+      };
+      /** @description サーバーエラー */
+      500: {
+        content: never;
+      };
+    };
+  };
+  /**
+   * カテゴリー一覧取得
+   * @description 利用可能なカテゴリー一覧を取得
+   */
+  getCategories: {
+    responses: {
+      /** @description 成功 */
+      200: {
+        content: {
+          "application/json": {
+            /** @description カテゴリー名のリスト */
+            categories?: string[];
+          };
         };
       };
       /** @description サーバーエラー */

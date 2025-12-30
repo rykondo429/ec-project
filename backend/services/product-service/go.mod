@@ -12,6 +12,7 @@ require (
 	github.com/labstack/echo/v4 v4.11.4
 	github.com/oapi-codegen/runtime v1.1.2
 	github.com/opensearch-project/opensearch-go/v2 v2.3.0
+	github.com/redis/go-redis/v9 v9.17.2
 	go.uber.org/zap v1.26.0
 	gorm.io/driver/mysql v1.5.2
 	gorm.io/gorm v1.25.5
@@ -19,7 +20,9 @@ require (
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect

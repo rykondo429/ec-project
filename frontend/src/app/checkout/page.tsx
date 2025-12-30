@@ -50,7 +50,7 @@ export default function CheckoutPage() {
       });
 
       await clearCart();
-      router.push(`/orders/${order.id}`);
+      router.push(`/order-complete?orderId=${order.id}`);
     } catch (err) {
       setError((err as Error).message);
     } finally {

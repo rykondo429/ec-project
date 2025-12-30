@@ -12,7 +12,7 @@ export default function Home() {
   const { products, searchProducts, getCategories } = useProductStore();
 
   useEffect(() => {
-    searchProducts('', '', 'created_at');
+    searchProducts({ keyword: '', sortBy: 'created_at' });
     getCategories();
   }, []);
 
