@@ -22,6 +22,7 @@ export default function ProductDetailPage() {
     if (params.id) {
       getProductWithSKUs(params.id as string);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   // SKUが読み込まれたら最初のSKUを選択
@@ -57,7 +58,7 @@ export default function ProductDetailPage() {
         );
       }
       alert('カートに追加しました');
-    } catch (error) {
+    } catch {
       alert('カートへの追加に失敗しました');
     } finally {
       setIsAdding(false);

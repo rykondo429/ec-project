@@ -134,7 +134,7 @@ export const getCurrentUser = async (): Promise<AuthUser | null> => {
       email: payload.email,
       sub: payload.sub,
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -146,7 +146,7 @@ export const getIdToken = async (): Promise<string | null> => {
   try {
     const session = await getCurrentSession();
     return session.getIdToken().getJwtToken();
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -158,7 +158,7 @@ export const getAccessToken = async (): Promise<string | null> => {
   try {
     const session = await getCurrentSession();
     return session.getAccessToken().getJwtToken();
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -166,7 +166,7 @@ export const getAccessToken = async (): Promise<string | null> => {
 /**
  * サインアップ
  */
-export const signUp = (params: SignUpParams): Promise<any> => {
+export const signUp = (params: SignUpParams): Promise<unknown> => {
   const { email, password, name } = params;
 
   return new Promise((resolve, reject) => {
@@ -200,7 +200,7 @@ export const signUp = (params: SignUpParams): Promise<any> => {
 /**
  * 確認コードを送信してアカウントを確認
  */
-export const confirmSignUp = (email: string, code: string): Promise<any> => {
+export const confirmSignUp = (email: string, code: string): Promise<unknown> => {
   return new Promise((resolve, reject) => {
     const pool = getUserPool();
     if (!pool) {
@@ -226,7 +226,7 @@ export const confirmSignUp = (email: string, code: string): Promise<any> => {
 /**
  * パスワードリセットのリクエスト
  */
-export const forgotPassword = (email: string): Promise<any> => {
+export const forgotPassword = (email: string): Promise<unknown> => {
   return new Promise((resolve, reject) => {
     const pool = getUserPool();
     if (!pool) {
@@ -257,7 +257,7 @@ export const confirmPassword = (
   email: string,
   code: string,
   newPassword: string
-): Promise<any> => {
+): Promise<unknown> => {
   return new Promise((resolve, reject) => {
     const pool = getUserPool();
     if (!pool) {

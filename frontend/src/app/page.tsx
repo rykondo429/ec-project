@@ -14,6 +14,7 @@ export default function Home() {
   useEffect(() => {
     searchProducts({ keyword: '', sortBy: 'created_at' });
     getCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

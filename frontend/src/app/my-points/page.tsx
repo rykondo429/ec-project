@@ -12,6 +12,7 @@ export default function MyPointsPage() {
   useEffect(() => {
     fetchBalance();
     fetchTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading) {

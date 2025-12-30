@@ -27,9 +27,10 @@ export default function SignUpPage() {
     try {
       await signUp({ email, password, name });
       setStep('confirm');
-    } catch (err: any) {
-      console.error('Signup error:', err);
-      setError(err.message || '会員登録に失敗しました');
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Signup error:', error);
+      setError(error.message || '会員登録に失敗しました');
     } finally {
       setLoading(false);
     }
@@ -43,9 +44,10 @@ export default function SignUpPage() {
     try {
       await confirmSignUp(email, confirmationCode);
       router.push('/login?message=confirmed');
-    } catch (err: any) {
-      console.error('Confirmation error:', err);
-      setError(err.message || '確認コードが正しくありません');
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Confirmation error:', error);
+      setError(error.message || '確認コードが正しくありません');
     } finally {
       setLoading(false);
     }

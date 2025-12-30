@@ -23,6 +23,7 @@ function ProductsPageContent() {
 
   useEffect(() => {
     getCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 検索実行
@@ -35,11 +36,13 @@ function ProductsPageContent() {
       maxPrice,
       minRating,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, selectedCategory, sortBy, minPrice, maxPrice, minRating]);
 
   // 初回ロードと依存関係変更時の検索
   useEffect(() => {
     executeSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory, sortBy, minPrice, maxPrice, minRating]);
 
   // デバウンス付き検索

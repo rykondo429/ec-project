@@ -20,8 +20,9 @@ export default function LoginForm() {
     try {
       await signIn({ email, password });
       router.push('/'); // ログイン成功後、ホームページへ
-    } catch (err: any) {
-      setError(err.message || 'ログインに失敗しました');
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message || 'ログインに失敗しました');
     } finally {
       setLoading(false);
     }

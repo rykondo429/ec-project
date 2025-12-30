@@ -41,13 +41,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       const currentUser = await getCurrentUser();
       setUser(currentUser);
-    } catch (error) {
+    } catch {
       setUser(null);
     }
   };
 
   useEffect(() => {
     refreshUser().finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSignIn = async (params: SignInParams) => {

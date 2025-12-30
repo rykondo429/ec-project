@@ -26,9 +26,10 @@ export default function ForgotPasswordPage() {
     try {
       await forgotPassword(email);
       setStep('reset');
-    } catch (err: any) {
-      console.error('Request code error:', err);
-      setError(err.message || 'コードの送信に失敗しました');
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Request code error:', error);
+      setError(error.message || 'コードの送信に失敗しました');
     } finally {
       setLoading(false);
     }
@@ -42,9 +43,10 @@ export default function ForgotPasswordPage() {
     try {
       await confirmPassword(email, code, newPassword);
       router.push('/login?message=password-reset');
-    } catch (err: any) {
-      console.error('Reset password error:', err);
-      setError(err.message || 'パスワードのリセットに失敗しました');
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Reset password error:', error);
+      setError(error.message || 'パスワードのリセットに失敗しました');
     } finally {
       setLoading(false);
     }

@@ -29,6 +29,7 @@ export default function OrderDetailPage() {
     if (params.id) {
       fetchOrder();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
   if (isLoading) {

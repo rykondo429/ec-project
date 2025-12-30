@@ -27,9 +27,10 @@ function LoginForm() {
       await signIn({ email, password });
       const redirect = searchParams.get('redirect') || '/';
       router.push(redirect);
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.message || 'ログインに失敗しました');
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error('Login error:', error);
+      setError(error.message || 'ログインに失敗しました');
     } finally {
       setLoading(false);
     }
