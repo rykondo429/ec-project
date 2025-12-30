@@ -5,9 +5,8 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files and api-schema types
-COPY frontend/package.json frontend/package-lock.json ./
-COPY api-schema/types ../api-schema/types
+# Copy package files
+COPY package.json package-lock.json ./
 
 RUN npm ci
 
@@ -15,8 +14,7 @@ RUN npm ci
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /api-schema ../api-schema
-COPY frontend/ .
+COPY . .
 
 RUN npm run build
 

@@ -1,32 +1,27 @@
-# Product Service Dockerfile
+# uproduct Service Dockerfile
 FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
-# Copy go.mod files
-COPY services/product-service/go.mod services/product-service/go.sum ./services/product-service/
-COPY shared/go.mod ./shared/
+# Copy go.mod and go.sum
+COPY go.mod go.sum ./
 
-WORKDIR /app/services/product-service
+# Download dependencies
 RUN go mod download
 
-# Copy shared module
-WORKDIR /app
-COPY shared ./shared
+# Copy source code
+COPY . .
 
-# Copy service code
-COPY services/product-service ./services/product-service
-
-WORKDIR /app/services/product-service
+# Build the binary
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o product-service .
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates curl
+RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-COPY --from=builder /app/services/product-service/product-service .
+COPY --from=builder /app/product-service .
 
 EXPOSE 8001
 

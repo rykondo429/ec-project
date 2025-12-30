@@ -1,23 +1,18 @@
-# Promotion Service Dockerfile
+# upromotion Service Dockerfile
 FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
-# Copy go.mod files
-COPY services/promotion-service/go.mod services/promotion-service/go.sum ./services/promotion-service/
-COPY shared/go.mod ./shared/
+# Copy go.mod and go.sum
+COPY go.mod go.sum ./
 
-WORKDIR /app/services/promotion-service
+# Download dependencies
 RUN go mod download
 
-# Copy shared module
-WORKDIR /app
-COPY shared ./shared
+# Copy source code
+COPY . .
 
-# Copy service code
-COPY services/promotion-service ./services/promotion-service
-
-WORKDIR /app/services/promotion-service
+# Build the binary
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o promotion-service .
 
 FROM alpine:latest
@@ -26,7 +21,7 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-COPY --from=builder /app/services/promotion-service/promotion-service .
+COPY --from=builder /app/promotion-service .
 
 EXPOSE 8005
 
