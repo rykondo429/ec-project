@@ -42,7 +42,7 @@ export const useProductStore = create<ProductState>((set) => ({
       const response = await productApi.searchProducts({
         keyword: params.keyword,
         category: params.category,
-        sort_by: params.sortBy,
+        sort_by: params.sortBy as 'price' | 'rating' | 'created_at' | undefined,
       });
       
       // クライアントサイドでの追加フィルタリング

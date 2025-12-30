@@ -6,17 +6,13 @@ import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/Button';
 import { OrderApi } from '@/lib/api-client';
+import * as Types from '@/types';
 
 function OrderCompleteContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = searchParams.get('orderId');
-  const [orderDetails, setOrderDetails] = useState<{
-    id: string;
-    items: { product_name: string; quantity: number; price: number }[];
-    total_amount: number;
-    status: string;
-  } | null>(null);
+  const [orderDetails, setOrderDetails] = useState<Types.Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -100,7 +96,7 @@ function OrderCompleteContent() {
                   <div className="flex justify-between items-center py-3 border-b border-gray-100">
                     <span className="text-gray-600 font-medium">注文日時</span>
                     <span className="text-gray-800">
-                      {new Date(orderDetails.created_at).toLocaleString('ja-JP')}
+                      {orderDetails.created_at ? new Date(orderDetails.created_at).toLocaleString('ja-JP') : '-'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center py-3 border-b border-gray-100">
@@ -112,7 +108,7 @@ function OrderCompleteContent() {
                   <div className="flex justify-between items-center py-3">
                     <span className="text-gray-600 font-medium text-lg">合計金額</span>
                     <span className="text-2xl font-bold text-green-600">
-                      ¥{orderDetails.total_amount?.toLocaleString()}
+                      ¥{orderDetails.total?.toLocaleString()}
                     </span>
                   </div>
                 </>
